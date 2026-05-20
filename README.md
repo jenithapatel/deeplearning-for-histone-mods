@@ -8,7 +8,7 @@ Four different model architectures (CNN, CNN+BiLSTM, Transformer encoder, superv
 
 ## Table of Contents
 
-1. [What the project does (plain English)](#1-what-the-project-does-plain-english)
+1. [What the project does](#1-what-the-project-does-plain-english)
 2. [Why it matters — applications](#2-why-it-matters--applications)
 3. [Problem statement](#3-problem-statement)
 4. [Assumptions and hypotheses](#4-assumptions-and-hypotheses-about-the-data-and-models)
@@ -23,13 +23,13 @@ Four different model architectures (CNN, CNN+BiLSTM, Transformer encoder, superv
 
 ---
 
-## 1. What the project does (plain English)
+## 1. What the project does
 
 **DNA is a long string written in a 4-letter alphabet.** Every one of your cells carries about three billion characters of it, written using only the letters `A`, `C`, `G`, and `T`. The order of these letters encodes the recipes for proteins and the instructions for when each protein gets made.
 
-**But DNA does not run on its own — it is wrapped around protein spools called histones.** Imagine a 6-foot-long string of beads stuffed inside a marble. To fit, the string is wound tightly around little spools. Whether the cell can actually "read" a given stretch of DNA depends on whether that part of the string is loosely or tightly wound around its spools.
+**But DNA does not run on its own, it is wrapped around protein spools called histones.** Imagine a 6-foot-long string of beads stuffed inside a marble. To fit, the string is wound tightly around little spools. Whether the cell can actually 'read' a given stretch of DNA depends on whether that part of the string is loosely or tightly wound around its spools.
 
-**Cells leave little chemical sticky notes on these spools** to mark which parts of the DNA are open for reading, which are silenced, which are gene starts, and so on. These sticky notes are called **histone modifications**. Each kind of sticky note has a name — `H3K4me3`, `H3K9ac`, `H4ac`, and so on. Different sticky notes mean different things:
+**Cells leave little chemical sticky notes on these spools** to mark which parts of the DNA are open for reading, which are silenced, which are gene starts, and so on. These sticky notes are called **histone modifications**. Each kind of sticky note has a name like `H3K4me3`, `H3K9ac`, `H4ac`, and so on. Different sticky notes mean different things:
 
 | Sticky note | What it usually means |
 |---|---|
@@ -42,7 +42,7 @@ Four different model architectures (CNN, CNN+BiLSTM, Transformer encoder, superv
 
 Measuring where these sticky notes sit is done with an expensive lab technique called ChIP-seq. **This project asks:** can a deep learning model look at *only the DNA letters* in a 500-character window and predict, for all 10 sticky notes at once, which ones are present?
 
-A working model means we can replace expensive lab experiments with a cheap forward pass through a neural network — and predict the effect of a single-letter DNA change on which sticky notes will appear.
+A working model means we can replace expensive lab experiments with a cheap forward pass through a neural network, and predict the effect of a single-letter DNA change on which sticky notes will appear.
 
 ---
 
@@ -76,7 +76,7 @@ Data source: the [Nucleotide Transformer downstream tasks benchmark](https://hug
 
 **Data assumptions**
 
-- The 500 bp DNA sequence around a region contains enough information to predict its histone marks. (If it didn't, no model — no matter how big — could work.)
+- The 500 bp DNA sequence around a region contains enough information to predict its histone marks. (If it didn't, no model and no matter how big — could work.)
 - Sequences in the train and test splits come from non-overlapping genomic regions, so a model cannot succeed by memorizing.
 - Labels are partially observed: each sequence has known labels for only some of the ten marks (it appeared in only some of the ten underlying ChIP-seq experiments). We track this with a per-mark **mask** and ignore unobserved entries in both the loss and the metrics.
 
@@ -129,7 +129,7 @@ Marks that mean similar biological things are strongly correlated, which is a us
 
 **Tokenization.** Each nucleotide is mapped to a small integer (`A→1`, `C→2`, `G→3`, `T→4`, `N→5`, with `0` reserved for padding). Sequences shorter than 500 bp are right-padded with the `N` token; longer ones are truncated. This produces input tensors of shape `(batch, 500)` that feed straight into a learned embedding layer.
 
-**Label vector.** For every sequence we build a length-10 binary vector — one slot per mark.
+**Label vector.** For every sequence, we build a length-10 binary vector with one slot per mark.
 
 **Mask vector.** Alongside the label vector we keep a length-10 binary mask: `1` if that mark was observed for this sequence, `0` otherwise. This mask gets used in two places:
 
@@ -168,7 +168,7 @@ Each model is trained for up to 20 epochs with early stopping. Train loss and va
 
 #### 1D CNN
 
-Train loss keeps decreasing, but val loss starts climbing around epoch 10 — classic overfitting. Early stopping triggered at epoch 20.
+Train loss keeps decreasing, but val loss starts climbing around epoch 10 (classic overfitting). Early stopping triggered at epoch 20.
 
 ![CNN training loss](results/07_training_curves_cnn_loss.png)
 ![CNN val AUROC](results/08_training_curves_cnn_auroc.png)
@@ -182,7 +182,7 @@ The cleanest curve of the four: train and val loss decrease together for the ful
 
 #### Transformer Encoder
 
-Severe underfitting. Train and val loss plateau early, and val AUROC stalls around 0.64 — well below the other three architectures. A randomly-initialized Transformer this small, without pretraining, simply doesn't have enough inductive bias for the task.
+Severe underfitting. Train and val loss plateau early, and val AUROC stalls around 0.64 which is well below the other three architectures. A randomly-initialized Transformer this small, without pretraining, simply doesn't have enough inductive bias for the task.
 
 ![Transformer training loss](results/11_training_curves_transformer_loss.png)
 ![Transformer val AUROC](results/12_training_curves_transformer_auroc.png)
@@ -198,7 +198,7 @@ Healthy training curves; the reconstruction term keeps the latent representation
 
 ## 8. Proposed solution (model selection)
 
-**Selection criterion:** validation macro AUROC. Macro AUROC averages each mark's AUROC equally, so it is not biased toward the more common marks. It is also threshold-free, which matters because thresholds are tuned downstream.
+**Selection criterion:** validation macro AUROC. Macro AUROC averages each mark's AUROC equally, so that it's not biased toward the more common marks. It's also threshold-free, which matters because thresholds are tuned downstream.
 
 | Rank | Model | Val macro AUROC | Val macro F1 |
 |---|---|---|---|
@@ -248,7 +248,7 @@ Some marks are intrinsically much easier to predict from sequence than others. `
 
 - **Masking matters end-to-end.** Any evaluation step that doesn't use the per-mark mask produces misleading numbers. This is the single most important methodological point of the project.
 - **Inductive bias beats raw capacity on this dataset.** The CNN+BiLSTM has fewer parameters than the Transformer encoder but outperforms it by 0.08 AUROC. With only ~33k training sequences, a randomly-initialized Transformer simply can't learn what motif-finding convolutions provide for free.
-- **A VAE side-objective is a wash.** The supervised CNN-VAE matches the plain CNN's classification performance — the reconstruction term doesn't help here, though it doesn't hurt either. The latent representation it learns might still be useful for downstream tasks (clustering, anomaly detection).
+- **A VAE side-objective is a wash.** The supervised CNN-VAE matches the plain CNN's classification performance, the reconstruction term doesn't help here, though it doesn't hurt either. The latent representation it learns might still be useful for downstream tasks (clustering, anomaly detection).
 - **Per-label thresholds are worth tuning.** The default `0.5` threshold is mis-calibrated when the underlying class balance varies across labels. Tuning per-mark thresholds on the validation set added several points of macro F1 on the test set with zero extra training.
 - **Some marks are intrinsically easier.** Histone-occupancy marks (`H3`, `H4`) score AUROC ≈ 0.75 while fine-grained active-mark distinctions (`H3K4me2` vs `H3K4me3`) hover near AUROC ≈ 0.6. This is consistent with the biology: occupancy is broadly correlated with sequence composition, while fine-grained modifications depend on cell-type context that the sequence alone doesn't capture.
 
