@@ -4,7 +4,7 @@ A multi-label deep learning project that takes a short stretch of DNA as input a
 
 Four different model architectures (CNN, CNN+BiLSTM, Transformer encoder, supervised CNN-VAE) are trained on the same multi-label problem and compared head-to-head on validation and test data.
 
----
+----
 
 ## Table of Contents
 
